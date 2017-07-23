@@ -23,6 +23,7 @@
   ],
   "dependencies": {
     "atomatic": "^0.3.0",
-    "html-minifier": "^3.5.3"
+    "html-minifier": "^3.5.3",
+    "through": "^2.3.8"
   }
 }
