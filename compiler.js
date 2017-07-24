@@ -18,7 +18,7 @@ compiler.compile = function (content, cb) {
 
   let matches;
 
-  const regex = /[\'"]([a-z0-9]+[^\'"\/]+)[\'"]/g;
+  const regex = /[\'"]([a-z0-9]+-[^\'"\/]+)[\'"]/g;
 
   while ((matches = regex.exec(content.toString())) !== null) {
     // This is necessary to avoid infinite loops with zero-width matches
@@ -45,10 +45,11 @@ compiler.resolve = function (filename) {
     basename = path.basename(filename, path.extname(filename)),
     [section, ...remainingSegments] = basename.split(separator),
     name = remainingSegments.join(separator),
-    regex = new RegExp(`${section}\/.*\/${name}\.[^\/.]+`);
+    regex = new RegExp(`${section}\/.*\/${name}\.[^\/.]+$`);
 
   if (undefined !== name) {
     const found = collectedFiles.find((filename) => regex.test(filename) );
+    console.log(regex, filename, found)
 
     if (found) {
       filename = found;
@@ -57,5 +58,3 @@ compiler.resolve = function (filename) {
 
   return filename;
 };
-
-

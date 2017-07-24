@@ -40,7 +40,6 @@ function onJsFile(file) {
   return stream;
 }
 
-
 function onAtomaticFile(file, {_flags: opts={}}) {
 
   let data = '';
@@ -59,7 +58,6 @@ function onAtomaticFile(file, {_flags: opts={}}) {
   return through(write, end);
 }
 
-
 module.exports = function (file, options) {
 
   if (/.js/.test(file)) {
@@ -73,5 +71,4 @@ module.exports = function (file, options) {
   return through();
 };
 
-// expose compiler
 module.exports.compiler = compiler;
