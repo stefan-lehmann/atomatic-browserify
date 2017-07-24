@@ -49,9 +49,13 @@ function onAtomaticFile(file, {_flags: opts={}}) {
   }
 
   function end () {
-    let content = atomatic.compileFile(file);
-    if (opts.minify) content = htmlmin.minify(content, opts);
-    this.queue(`module.exports=${JSON.stringify(content)};`);
+    let {source: template, locals: data} = atomatic.compileFile(file, {browserify: true});
+
+    if (opts.minify) {
+      template = htmlmin.minify(template, opts);
+      data = {};
+    }
+    this.queue(`module.exports=${JSON.stringify({template, data})};`);
     this.queue(null);
   }
 
