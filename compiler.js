@@ -49,7 +49,6 @@ compiler.resolve = function (filename) {
 
   if (undefined !== name) {
     const found = collectedFiles.find((filename) => regex.test(filename) );
-    console.log(regex, filename, found)
 
     if (found) {
       filename = found;
