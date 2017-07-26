@@ -49,13 +49,20 @@ function onAtomaticFile(file, {_flags: opts={}}) {
   }
 
   function end () {
-    let {source: template, locals: data} = atomatic.compileFile(file, {browserify: true});
+    let
+      {source: template, locals} = atomatic.compileFile(file, {browserify: true});
 
     if (opts.minify) {
       template = htmlmin.minify(template, opts);
-      data = {};
     }
-    this.queue(`module.exports=${JSON.stringify({template, data})};`);
+
+    const exportObject = {template};
+
+    if (opts.useMockdata === true) {
+      exportObject.mockData = locals;
+    }
+
+    this.queue(`module.exports=${JSON.stringify(exportObject)};`);
     this.queue(null);
   }
 
@@ -64,11 +71,11 @@ function onAtomaticFile(file, {_flags: opts={}}) {
 
 module.exports = function (file, options) {
 
-  if (/.js/.test(file)) {
+  if (/\.js$/.test(file)) {
     return onJsFile(file, options);
   }
 
-  if (/.twig/.test(file)) {
+  if (/\.twig$/.test(file)) {
     return onAtomaticFile(file, options);
   }
 
