@@ -1,7 +1,7 @@
 {
   "name": "atomatic-browserify",
   "description": "A transform for Browserify that allows you to require compiled Atomatic templates in Javascript",
-  "version": "0.2.6",
+  "version": "0.2.7",
   "license": "MIT",
   "url": "https://github.com/stefan-lehmann/atomatic-browserify",
   "main": "./index.js",
@@ -21,7 +21,7 @@
     "browserify"
   ],
   "dependencies": {
-    "atomatic": ">=0.6.1",
+    "atomatic": "*",
     "babel-core": "^6.25.0",
     "html-minifier": "^3.5.3",
     "through": "^2.3.8"
