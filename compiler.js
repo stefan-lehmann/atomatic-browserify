@@ -1,5 +1,8 @@
 const
+  fs = require('fs'),
   path = require('path'),
+  minimatch = require('minimatch'),
+  objectHash = require('object-hash'),
   Emitter = require('events').EventEmitter;
 
 let hasBabel = true;
@@ -14,46 +17,43 @@ const compiler = module.exports = new Emitter();
 
 compiler.setMaxListeners(Infinity);
 
-compiler.compile = function (content, cb) {
+compiler.compileAtomaticFiles = (files) => {
 
-  let matches;
+  return files
+    .filter(({filename}) => minimatch(path.basename(filename), compiler.matchPattern))
+    .map((file) => {
 
-  const regex = /[\'"]([a-z0-9]+-[^\'"\/]+)[\'"]/g;
+      const
+        {filename, componentName, extension, data, timestamp} = file,
+        atomaticFile = path.join(compiler.path, componentName + '.atomatic'),
+        hash = objectHash.MD5({componentName, browserify: true});
 
-  while ((matches = regex.exec(content.toString())) !== null) {
-    // This is necessary to avoid infinite loops with zero-width matches
-    if (matches.index === regex.lastIndex) {
-      regex.lastIndex++;
-    }
-    const
-      [replaceString, componentName] = matches,
-      resolvedFile = this.resolve(componentName);
+      if (!file._lastBrowserify || file._lastBrowserify < timestamp) {
+        const {source: template, locals} = compiler.compileFile({
+            filename,
+            componentName,
+            extension,
+            data,
+            hash,
+            timestamp,
+            saveHtml: null,
+            saveLocals: null,
+            renderHook: null
+          },
+          compiler.global, false);
+        fs.writeFileSync(atomaticFile, JSON.stringify({template, locals}, null, 2));
 
-    if (resolvedFile !== componentName) {
-      const regex = new RegExp(`${replaceString.replace(/([\(\)])/g, '\\$1')}`, 'g');
-      content = content.replace(regex, `'${resolvedFile}'`);
-    }
-  }
+        file._lastBrowserify = timestamp;
+      }
 
-  cb(null, content)
+      return componentName;
+    });
 };
 
-compiler.resolve = function (filename) {
-  const
-    collectedFiles = [...this.getFiles().keys()],
-    separator = '-',
-    basename = path.basename(filename, path.extname(filename)),
-    [section, ...remainingSegments] = basename.split(separator),
-    name = remainingSegments.join(separator),
-    regex = new RegExp(`${section}\/.*\/${name}\.[^\/.]+$`);
+compiler.compile = (content, cb) => {
+  compiler.compiledAtomaticFiles.map(componentName => {
+    content = content.replace(new RegExp(`(\'|\")+(${componentName})(\'|\")+`, 'g'), `$1${compiler.path}/${componentName}.atomatic$3`);
+  });
 
-  if (undefined !== name) {
-    const found = collectedFiles.find((filename) => regex.test(filename) );
-
-    if (found) {
-      filename = found;
-    }
-  }
-
-  return filename;
+  cb(null, content)
 };

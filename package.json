@@ -21,8 +21,11 @@
     "browserify"
   ],
   "dependencies": {
+    "atomatic": "file:/Users/slehmann/Documents/atomatic/atomatic",
     "babel-core": "^6.25.0",
     "html-minifier": "^3.5.3",
+    "minimatch": "^3.0.4",
+    "object-hash": "^1.2.0",
     "through": "^2.3.8"
   }
 }

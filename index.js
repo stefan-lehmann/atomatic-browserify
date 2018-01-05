@@ -1,10 +1,23 @@
 const
+  path = require('path'),
+  fs = require('fs'),
   through = require('through'),
-  atomatic = require('atomatic'),
   htmlmin = require('html-minifier'),
+  atomatic = require('atomatic'),
   compiler = require('./compiler');
 
-compiler.getFiles = atomatic.getCollectedFiles.bind(atomatic);
+function createDir(targetPath) {
+
+  targetPath.split(path.sep)
+    .reduce((parentDir, childDir) => {
+      const curDir = path.resolve(parentDir, childDir);
+      if (!fs.existsSync(curDir)) {
+        fs.mkdirSync(curDir);
+      }
+      return curDir;
+    }, path.isAbsolute(targetPath) ? path.sep : '');
+}
+
 
 function onJsFile(file) {
 
@@ -40,7 +53,7 @@ function onJsFile(file) {
   return stream;
 }
 
-function onAtomaticFile(file, {_flags: opts={}}) {
+function onAtomaticFile(filename, {_flags: opts = {}}) {
 
   let data = '';
 
@@ -48,9 +61,9 @@ function onAtomaticFile(file, {_flags: opts={}}) {
     data += buf;
   }
 
-  function end () {
+  function end() {
     let
-      {source: template, locals} = atomatic.compileFile(file, {browserify: true});
+      {template, locals} = JSON.parse(fs.readFileSync(filename));
 
     if (opts.minify) {
       template = htmlmin.minify(template, opts);
@@ -69,17 +82,28 @@ function onAtomaticFile(file, {_flags: opts={}}) {
   return through(write, end);
 }
 
-module.exports = function (file, options) {
+module.exports = ({compileDir = '.temp/browserify', matchPattern = '*.browserify.twig', global = {browserify: true}}) => {
 
-  if (/\.js$/.test(file)) {
-    return onJsFile(file, options);
-  }
+  createDir(compileDir);
 
-  if (/\.twig$/.test(file)) {
-    return onAtomaticFile(file, options);
-  }
+  compiler.compileFile = atomatic.compileFile.bind(atomatic);
+  compiler.path = path.resolve(compileDir);
+  compiler.matchPattern = matchPattern;
+  compiler.global = global;
+  compiler.compiledAtomaticFiles = compiler.compileAtomaticFiles([...atomatic.getCollectedFiles.call(atomatic).values()]);
 
-  return through();
+  return (file, options) => {
+
+    if (/\.js$/.test(file)) {
+      return onJsFile(file, options);
+    }
+
+    if (/\.atomatic/.test(file)) {
+      return onAtomaticFile(file, options);
+    }
+
+    return through();
+  };
 };
 
 module.exports.compiler = compiler;
