@@ -52,7 +52,12 @@ compiler.compileAtomaticFiles = (files) => {
 
 compiler.compile = (content, cb) => {
   compiler.compiledAtomaticFiles.map(componentName => {
-    content = content.replace(new RegExp(`(\'|\")+(${componentName})(\'|\")+`, 'g'), `$1${compiler.path}/${componentName}.atomatic$3`);
+    const
+      cleanedComponentName = path.basename(componentName, path.extname(componentName)),
+      regex = new RegExp(`(\'|\")+(${cleanedComponentName})(\'|\")+`, 'g'),
+      value = `$1${compiler.path}/${componentName}.atomatic$3`;
+
+    content = content.replace(regex, value);
   });
 
   cb(null, content)
