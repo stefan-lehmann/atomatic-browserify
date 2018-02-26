@@ -20,7 +20,7 @@
     "atomatic",
     "browserify"
   ],
-  "dependencies": {
+  "devDependencies": {
     "babel-core": "^6.25.0",
     "html-minifier": "^3.5.3",
     "minimatch": "^3.0.4",

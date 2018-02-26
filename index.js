@@ -2,7 +2,6 @@ const
   path = require('path'),
   fs = require('fs'),
   through = require('through'),
-  htmlmin = require('html-minifier'),
   atomatic = require('atomatic'),
   compiler = require('./compiler');
 
@@ -37,6 +36,7 @@ function onJsFile(file) {
     compiler.on('dependency', dependency);
 
     compiler.compile(data, (error, result) => {
+
       compiler.removeListener('dependency', dependency);
       if (error) {
         stream.emit('error', error);
@@ -47,39 +47,10 @@ function onJsFile(file) {
         stream.queue(result);
         stream.queue(null);
       }
-    })
+    });
   }
 
   return stream;
-}
-
-function onAtomaticFile(filename, {_flags: opts = {}}) {
-
-  let data = '';
-
-  function write(buf) {
-    data += buf;
-  }
-
-  function end() {
-    let
-      {template, locals} = JSON.parse(fs.readFileSync(filename));
-
-    if (opts.minify) {
-      template = htmlmin.minify(template, opts);
-    }
-
-    const exportObject = {template};
-
-    if (opts.useMockdata === true) {
-      exportObject.mockData = locals;
-    }
-
-    this.queue(`module.exports=${JSON.stringify(exportObject)};`);
-    this.queue(null);
-  }
-
-  return through(write, end);
 }
 
 module.exports = ({compileDir = '.temp/browserify', matchPattern = '*.browserify.twig', global = {browserify: true}}) => {
@@ -96,10 +67,6 @@ module.exports = ({compileDir = '.temp/browserify', matchPattern = '*.browserify
 
     if (/\.js$/.test(file)) {
       return onJsFile(file, options);
-    }
-
-    if (/\.atomatic/.test(file)) {
-      return onAtomaticFile(file, options);
     }
 
     return through();
