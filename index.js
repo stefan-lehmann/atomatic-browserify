@@ -53,7 +53,7 @@ function onJsFile(file) {
   return stream;
 }
 
-module.exports = ({compileDir = '.temp/browserify', matchPattern = '*.browserify.twig', global = {browserify: true}}) => {
+module.exports = ({compileDir = '.temp/browserify', matchPattern = '*.browserify.twig', global = {browserify: true}, useMockdata}) => {
 
   createDir(compileDir);
 
@@ -61,7 +61,7 @@ module.exports = ({compileDir = '.temp/browserify', matchPattern = '*.browserify
   compiler.path = path.resolve(compileDir);
   compiler.matchPattern = matchPattern;
   compiler.global = global;
-  compiler.compiledAtomaticFiles = compiler.compileAtomaticFiles([...atomatic.getCollectedFiles.call(atomatic).values()]);
+  compiler.compiledAtomaticFiles = compiler.compileAtomaticFiles([...atomatic.getCollectedFiles.call(atomatic).values()], useMockdata);
 
   return (file, options) => {
 

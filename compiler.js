@@ -23,7 +23,7 @@ compiler.replaceFileExtension = (filename, extension) => {
   return `${(i < 0) ? filename : filename.substr(0, i)}.${extension}`;
 }
 
-compiler.compileAtomaticFiles = (files) => {
+compiler.compileAtomaticFiles = (files, useMockdata) => {
 
   return files
     .filter(({filename}) => minimatch(path.basename(filename), compiler.matchPattern))
@@ -32,10 +32,13 @@ compiler.compileAtomaticFiles = (files) => {
       const
         {filename, componentName, extension, data, timestamp} = file,
         atomaticFile = path.join(compiler.path, `${componentName}.js`),
-        hash = objectHash.MD5({componentName, browserify: true});
+        hash = objectHash.MD5({componentName, browserify: true}),
+        jsFilename = compiler.replaceFileExtension(filename, 'js'),
+        hasJsFile = fs.existsSync(jsFilename),
+        jsFileMtime = hasJsFile ? fs.statSync(jsFilename).mtime : 0;
 
-      if (!file._lastBrowserify || file._lastBrowserify < timestamp) {
-        const {source, locals} = compiler.compileFile({
+      if (!file._lastBrowserify || file._lastBrowserify < timestamp || jsFileMtime > file._lastBrowserify) {
+        let {source = '', locals = ''} = compiler.compileFile({
             filename,
             componentName,
             extension,
@@ -48,12 +51,14 @@ compiler.compileAtomaticFiles = (files) => {
           },
           compiler.global, false);
 
-        const jsFilename = compiler.replaceFileExtension(filename, 'js');
+        if (!useMockdata) {
+          locals = {};
+        }
 
         fs.writeFileSync(atomaticFile, [
-          fs.existsSync(jsFilename) ? fs.readFileSync(jsFilename, 'utf8') : '',
           `const __template = ${JSON.stringify(htmlmin.minify(source))};`,
           `const __mockData = ${JSON.stringify(locals)};`,
+          hasJsFile ? fs.readFileSync(jsFilename, 'utf8') : '',
           `export { __template as template, __mockData as mockData };`
         ].join('\n'));
 
